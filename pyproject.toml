@@ -71,11 +71,7 @@ tag_format = "v${version}"
 major_version_zero = true
 bump_message = "release $current_version → $new_version [skip-ci]"
 
-[[tool.uv.index]]
-name = "pypi"
-url = "https://pypi.org/simple/"
-publish-url = "https://upload.pypi.org/legacy/"
-explicit = true
+
 
 [[tool.uv.index]]
 name = "testpypi"
