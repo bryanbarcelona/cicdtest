@@ -60,7 +60,7 @@ jobs:
             ls -la dist/
           else
             echo "🔴 ACTUAL: Publishing to PyPI..."
-            UV_PUBLISH_INDEX=pypi uv publish
+            uv publish
           fi
 
       - name: Push commit & tag to repository
