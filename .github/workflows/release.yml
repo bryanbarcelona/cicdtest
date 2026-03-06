@@ -1,0 +1,125 @@
+name: Publish Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  tests:
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    needs: tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      version: ${{ steps.cz.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT }}
+
+      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v3
+
+      - name: Sync dependencies
+        run: |
+          uv sync --all-extras --dev --frozen
+
+      - name: Install commitizen
+        run: |
+          uv tool install commitizen
+
+      - name: Bump version, changelog & tag (prepare only)
+        id: cz
+        uses: commitizen-tools/commitizen-action@0.26.0
+        with:
+          github_token: ${{ secrets.PAT }}
+          git_name: "bryanbarcelona"
+          git_email: "bryan.barcelona@gmail.com"
+          commit: ${{ !env.ACT }}  # Only commit in GitHub, not locally
+          push: false
+          changelog: true
+          no_raise: 21
+          dry_run: ${{ env.ACT }}  # Dry run when local
+
+      - name: Build distribution packages
+        if: steps.cz.outputs.version != ''
+        run: uv build
+
+      - name: Publish to PyPI
+        if: steps.cz.outputs.version != ''
+        run: |
+          if [[ "$ACT" == "true" ]]; then
+            echo "🟢 LOCAL SIMULATION: WOULD PUBLISH → dist/*.whl + dist/*.tar.gz to PyPI"
+            ls -la dist/
+          else
+            echo "🔴 ACTUAL: Publishing to PyPI..."
+            uv publish
+          fi
+
+      - name: Push commit & tag to repository
+        if: steps.cz.outputs.version != ''
+        run: |
+          if [[ "$ACT" == "true" ]]; then
+            echo "🟢 LOCAL SIMULATION: WOULD PUSH → commit and tag v${{ steps.cz.outputs.version }} to repo"
+            echo "Commit that would be pushed:"
+            git log -1 --oneline
+            echo "Tag that would be pushed: v${{ steps.cz.outputs.version }}"
+          else
+            echo "🔴 ACTUAL: Pushing to GitHub..."
+            git push origin HEAD:main
+            git push origin v${{ steps.cz.outputs.version }}
+          fi
+
+  release:
+    needs: publish
+    if: ${{ needs.publish.outputs.version != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        if: env.ACT != 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.publish.outputs.version }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fake checkout for local simulation
+        if: env.ACT == 'true'
+        run: |
+          echo "🟢 LOCAL SIMULATION: WOULD CHECKOUT v${{ needs.publish.outputs.version }}"
+          mkdir -p dist
+          # Copy dist files from publish job if needed
+
+      - uses: astral-sh/setup-uv@v3
+
+      - name: Build release assets
+        run: |
+          if [[ "$ACT" == "true" ]]; then
+            echo "🟢 LOCAL SIMULATION: WOULD BUILD release assets"
+          else
+            uv build
+          fi
+
+      - name: Create GitHub Release
+        run: |
+          if [[ "$ACT" == "true" ]]; then
+            echo "🟢 LOCAL SIMULATION: WOULD CREATE GITHUB RELEASE → v${{ needs.publish.outputs.version }}"
+            echo "WOULD ATTACH FILES:"
+            ls -la dist/*.whl dist/*.tar.gz 2>/dev/null || echo "  (no dist files found)"
+          else
+            echo "🔴 ACTUAL: Creating GitHub Release..."
+            gh release create v${{ needs.publish.outputs.version }} dist/*.whl dist/*.tar.gz --generate-notes
+          fi
+
+      - name: Debug - Release created
+        if: success()
+        run: echo "::notice::✅ Release v${{ needs.publish.outputs.version }} created successfully"
