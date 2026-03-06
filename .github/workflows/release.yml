@@ -89,8 +89,7 @@ jobs:
         if: env.ACT != 'true'
         uses: actions/checkout@v4
         with:
-          ref: v${{ needs.publish.outputs.version }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT }}
 
       - name: Fake checkout for local simulation
         if: env.ACT == 'true'
