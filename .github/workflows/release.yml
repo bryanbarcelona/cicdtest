@@ -42,11 +42,11 @@ jobs:
           github_token: ${{ secrets.PAT }}
           git_name: "bryanbarcelona"
           git_email: "bryan.barcelona@gmail.com"
-          commit: ${{ !env.ACT }}  # Only commit in GitHub, not locally
           push: false
           changelog: true
           no_raise: 21
-          dry_run: ${{ env.ACT }}  # Dry run when local
+        env:
+          ACT: ${{ env.ACT }}
 
       - name: Build distribution packages
         if: steps.cz.outputs.version != ''
