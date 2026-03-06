@@ -110,6 +110,8 @@ jobs:
           fi
 
       - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [[ "$ACT" == "true" ]]; then
             echo "🟢 LOCAL SIMULATION: WOULD CREATE GITHUB RELEASE → v${{ needs.publish.outputs.version }}"
