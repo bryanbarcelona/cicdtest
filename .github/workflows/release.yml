@@ -27,12 +27,15 @@ jobs:
       - uses: actions/setup-python@v5
       - uses: astral-sh/setup-uv@v3
 
-      - name: Early exit for auto-release commits
-        if: startsWith(github.event.head_commit.message, 'chore(release):')
+      - name: Skip if release commit
         run: |
-          echo "🔹 Detected auto-release commit, exiting workflow early"
-          exit 0
-
+          MSG=$(git log -1 --pretty=%s)
+          echo "Commit subject: $MSG"
+          if [[ $MSG == chore(release):* ]]; then
+            echo "Release commit detected → early exit"
+            exit 0   # exits the whole job early
+          fi
+          
       - name: Sync dependencies
         run: |
           uv sync --all-extras --dev --frozen
