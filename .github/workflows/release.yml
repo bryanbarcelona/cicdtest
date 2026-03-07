@@ -31,11 +31,11 @@ jobs:
         run: |
           MSG=$(git log -1 --pretty=%s)
           echo "Commit subject: $MSG"
-          if [[ $MSG == chore(release):* ]]; then
+          if [[ "$MSG" == "chore(release):"* ]]; then
             echo "Release commit detected → early exit"
-            exit 0   # exits the whole job early
+            exit 0
           fi
-          
+
       - name: Sync dependencies
         run: |
           uv sync --all-extras --dev --frozen
