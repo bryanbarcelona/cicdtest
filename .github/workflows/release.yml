@@ -9,13 +9,38 @@ permissions:
   id-token: write
 
 jobs:
+
+  skip-check:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      is-release-commit: ${{ steps.check.outputs.is_release == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT }}
+
+      - id: check
+        name: Detect release commit
+        run: |
+          MSG=$(git log -1 --pretty=%s)
+          echo "Last commit: $MSG"
+          if [[ "$MSG" == "chore(release):"* ]]; then
+            echo "is_release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_release=false" >> "$GITHUB_OUTPUT"
+          fi
+
   tests:
     uses: ./.github/workflows/ci.yml
 
   publish:
-    needs: tests
+    needs: [tests, skip-check]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: |
+      github.ref == 'refs/heads/main' &&
+      needs.skip-check.outputs.is-release-commit != 'true'
     outputs:
       version: ${{ steps.cz.outputs.version }}
     steps:
@@ -88,7 +113,7 @@ jobs:
 
   release:
     needs: publish
-    if: ${{ needs.publish.outputs.version != '' }}
+    if: ${{ needs.publish.result == 'success' && needs.publish.outputs.version != '' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
