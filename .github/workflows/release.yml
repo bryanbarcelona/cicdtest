@@ -124,7 +124,7 @@ jobs:
 
   release:
     needs: publish
-    if: ${{ needs.publish.result == 'success' && needs.publish.outputs.version != '' && needs.publish.outputs.proceed == 'true' }}
+    if: ${{ needs.publish.result == 'success' && needs.publish.outputs.version != '' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
