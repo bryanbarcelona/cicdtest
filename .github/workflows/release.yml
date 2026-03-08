@@ -194,3 +194,4 @@ jobs:
       - name: Debug - Release created
         if: success()
         run: echo "::notice::✅ Release v${{ needs.publish.outputs.version }} created successfully"
+        
