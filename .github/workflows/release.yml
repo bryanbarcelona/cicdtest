@@ -130,12 +130,19 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout the new tag
-        if: steps.bump.outputs.proceed == 'true'
+      - name: Checkout code (real run)
+        if: ${{ !env.ACT && steps.bump.outputs.proceed == 'true' }}
         uses: actions/checkout@v4
         with:
           ref: v${{ needs.publish.outputs.version }}
           token: ${{ secrets.PAT }}
+
+      - name: Fake checkout for local simulation
+        if: ${{ env.ACT && steps.bump.outputs.proceed == 'true' }}
+        run: |
+          echo "🟢 LOCAL SIMULATION: WOULD CHECKOUT v${{ needs.publish.outputs.version }}"
+          mkdir -p dist
+          # (keep your comment or any other simulation logic you had)
 
       # - name: Checkout code
       #   if: steps.bump.outputs.proceed == 'true' && env.ACT != 'true'
