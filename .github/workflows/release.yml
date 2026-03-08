@@ -43,6 +43,7 @@ jobs:
       needs.skip-check.outputs.is-release-commit != 'true'
     outputs:
       version: ${{ steps.cz.outputs.version }}
+      proceed: ${{ steps.bump.outputs.proceed }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -151,14 +152,14 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout code (real run)
+      - name: Checkout code
         if: ${{ !env.ACT && needs.publish.outputs.proceed == 'true' }}
         uses: actions/checkout@v4
         with:
           ref: v${{ needs.publish.outputs.version }}
           token: ${{ secrets.PAT }}
 
-      - name: Fake checkout for local simulation
+      - name: Simulated checkout for local run
         if: ${{ env.ACT && needs.publish.outputs.proceed == 'true' }}
         run: |
           echo "🟢 LOCAL SIMULATION: WOULD CHECKOUT v${{ needs.publish.outputs.version }}"
