@@ -75,28 +75,17 @@ jobs:
         env:
           ACT: ${{ env.ACT }}
 
-      - name: Get current version
-        id: current
-        run: |
-          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          echo "git describe raw tag: '$TAG'"
-
-          if [ -n "$TAG" ]; then
-            CURRENT=$(echo "$TAG" | sed 's/^v//')
-          else
-            CURRENT="0.0.0"
-          fi
-
-          echo "final current output: '$CURRENT'"
-          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
-
       - name: Detect real bump
         id: bump
         run: |
-          echo "Commitizen proposed: ${{ steps.cz.outputs.version }}"
-          echo "Git describe gave : ${{ steps.current.current }}"
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          CURRENT=$(echo "$TAG" | sed 's/^v//' || echo "0.0.0")
+          PROPOSED="${{ steps.cz.outputs.version }}"
 
-          if [[ "${{ steps.cz.outputs.version }}" == "${{ steps.current.current }}" || -z "${{ steps.cz.outputs.version }}" ]]; then
+          echo "Commitizen proposed: '$PROPOSED'"
+          echo "Git describe gave : '$CURRENT'"
+
+          if [[ "$PROPOSED" == "$CURRENT" || -z "$PROPOSED" ]]; then
             echo "No bump"
             echo "proceed=false" >> $GITHUB_OUTPUT
           else
