@@ -78,8 +78,17 @@ jobs:
       - name: Get current version
         id: current
         run: |
-          CURRENT=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "0.0.0")
-          echo "current=$CURRENT" >> $GITHUB_OUTPUT
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "git describe raw tag: '$TAG'"
+
+          if [ -n "$TAG" ]; then
+            CURRENT=$(echo "$TAG" | sed 's/^v//')
+          else
+            CURRENT="0.0.0"
+          fi
+
+          echo "final current output: '$CURRENT'"
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
 
       - name: Detect real bump
         id: bump
