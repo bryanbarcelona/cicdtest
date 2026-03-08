@@ -130,20 +130,27 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout code
-        if: steps.bump.outputs.proceed == 'true' && env.ACT != 'true'
-        #if: env.ACT != 'true'
+      - name: Checkout the new tag
+        if: steps.bump.outputs.proceed == 'true'
         uses: actions/checkout@v4
         with:
+          ref: v${{ needs.publish.outputs.version }}
           token: ${{ secrets.PAT }}
 
-      - name: Fake checkout for local simulation
-        if: steps.bump.outputs.proceed == 'true' && env.ACT != 'true'
-        #if: env.ACT == 'true'
-        run: |
-          echo "🟢 LOCAL SIMULATION: WOULD CHECKOUT v${{ needs.publish.outputs.version }}"
-          mkdir -p dist
-          # Copy dist files from publish job if needed
+      # - name: Checkout code
+      #   if: steps.bump.outputs.proceed == 'true' && env.ACT != 'true'
+      #   #if: env.ACT != 'true'
+      #   uses: actions/checkout@v4
+      #   with:
+      #     token: ${{ secrets.PAT }}
+
+      # - name: Fake checkout for local simulation
+      #   if: steps.bump.outputs.proceed == 'true' && env.ACT != 'true'
+      #   #if: env.ACT == 'true'
+      #   run: |
+      #     echo "🟢 LOCAL SIMULATION: WOULD CHECKOUT v${{ needs.publish.outputs.version }}"
+      #     mkdir -p dist
+      #     # Copy dist files from publish job if needed
 
       - uses: astral-sh/setup-uv@v3
 
