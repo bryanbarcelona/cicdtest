@@ -122,6 +122,20 @@ jobs:
             git push origin v${{ steps.cz.outputs.version }}
           fi
 
+  debug-outputs:
+    needs: publish
+    runs-on: ubuntu-latest
+    if: always()   # run even if publish failed/skipped
+    steps:
+      - name: Print all relevant values
+        run: |
+          echo "publish result   = ${{ needs.publish.result }}"
+          echo "version output   = '${{ needs.publish.outputs.version }}'"
+          echo "proceed output   = '${{ needs.publish.outputs.proceed }}'"
+          echo "proceed == 'true' = ${{ needs.publish.outputs.proceed == 'true' }}"
+          echo "fromJSON(proceed) = ${{ fromJSON(needs.publish.outputs.proceed) }}"
+          echo "full condition    = ${{ needs.publish.result == 'success' && needs.publish.outputs.version != '' && needs.publish.outputs.proceed == 'true' }}"
+
   release:
     needs: publish
     if: ${{ needs.publish.result == 'success' && needs.publish.outputs.version != '' }}
