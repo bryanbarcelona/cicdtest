@@ -133,7 +133,14 @@ jobs:
           echo "version output   = '${{ needs.publish.outputs.version }}'"
           echo "proceed output   = '${{ needs.publish.outputs.proceed }}'"
           echo "proceed == 'true' = ${{ needs.publish.outputs.proceed == 'true' }}"
-          echo "fromJSON(proceed) = ${{ fromJSON(needs.publish.outputs.proceed) }}"
+
+          # Safe runtime test of fromJSON (using shell to simulate)
+          if [ "${{ needs.publish.outputs.proceed }}" = "true" ]; then
+            echo "Manual fromJSON-like: true"
+          else
+            echo "Manual fromJSON-like: false / empty"
+          fi
+
           echo "full condition    = ${{ needs.publish.result == 'success' && needs.publish.outputs.version != '' && needs.publish.outputs.proceed == 'true' }}"
 
   release:
