@@ -84,24 +84,14 @@ jobs:
       - name: Detect real bump
         id: bump
         run: |
-          PROPOSED="${{ steps.cz.outputs.version }}"
-          CURRENT="${{ steps.current.current }}"
+          echo "Commitizen proposed: ${{ steps.cz.outputs.version }}"
+          echo "Git describe gave : ${{ steps.current.current }}"
 
-          # Print raw values for debugging
-          echo "Raw proposed version (from Commitizen): '$PROPOSED'"
-          echo "Raw current version (from git describe): '$CURRENT'"
-
-          # Normalize: remove whitespace, quotes, leading/trailing junk
-          PROPOSED_CLEAN=$(echo -n "$PROPOSED" | tr -d '[:space:]"'" | sed 's/^v//')
-          CURRENT_CLEAN=$(echo -n "$CURRENT" | tr -d '[:space:]"'" | sed 's/^v//')
-
-          echo "Clean proposed: '$PROPOSED_CLEAN'"
-          echo "Clean current : '$CURRENT_CLEAN'"
-
-          if [[ "$PROPOSED_CLEAN" == "$CURRENT_CLEAN" || -z "$PROPOSED_CLEAN" ]]; then
-            echo "::notice::No real version increment detected → skipping publish/release"
+          if [[ "${{ steps.cz.outputs.version }}" == "${{ steps.current.current }}" || -z "${{ steps.cz.outputs.version }}" ]]; then
+            echo "No bump"
             echo "proceed=false" >> $GITHUB_OUTPUT
           else
+            echo "Bump detected"
             echo "proceed=true" >> $GITHUB_OUTPUT
           fi
 
